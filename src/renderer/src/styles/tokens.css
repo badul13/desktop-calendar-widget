@@ -1,0 +1,144 @@
+/* 밝은 배경화면 위 (기본) */
+:root {
+  --font-ui: 'Jua';
+
+  --glass: rgba(255, 255, 255, 0.66);
+  --glass-edge: rgba(255, 255, 255, 0.62);
+  --surface: rgba(255, 255, 255, 0.5);
+  --surface-hi: rgba(255, 255, 255, 0.86);
+
+  --text: #3a3a44;
+  --text-mid: #6e6e7e;
+  --text-dim: #9a9aa8;
+  --line: rgba(140, 140, 165, 0.18);
+
+  --accent: #ffb3c6;
+  --accent-soft: rgba(255, 179, 198, 0.28);
+  --accent-ink: #de6c90;
+  --accent-2: #a8e6cf;
+  --accent-2-ink: #3f9c78;
+  --sat: #7ba9f5;
+  --sun: #ff8e97;
+
+  /* 한 칸에 세 종류가 같이 들어가므로 계열을 확실히 갈라둔다 */
+  /* 근무시간 — 페리윙클 */
+  --work-bg: rgba(150, 172, 255, 0.2);
+  --work-ink: #5b73c7;
+  /* 할 일 — 살구. 안 끝난 일이 눈에 띄어야 하므로 칩을 채운다 */
+  --todo-bg: rgba(255, 186, 120, 0.3);
+  --todo-ink: #a4652a;
+  --todo-line: #d99751;
+  /* 완료된 할 일은 배경을 빼서 뒤로 물러나게 */
+  --todo-bg-done: rgba(140, 140, 165, 0.09);
+  /* 메모 — 기본은 노란 메모지. 달력의 세 색과 겹치지 않는 계열. */
+  --note-bg: rgba(255, 232, 150, 0.26);
+  --note-bg-hi: rgba(255, 232, 150, 0.42);
+  --note-line: rgba(214, 176, 60, 0.34);
+  --note-ink: #9a7818;
+
+  /* 쪽지 배경 템플릿 5종 — -solid 는 색 고르는 동그라미용 */
+  --n-yellow: rgba(255, 232, 150, 0.5);
+  --n-yellow-line: rgba(214, 176, 60, 0.42);
+  --n-yellow-solid: #ffe08a;
+  --n-pink: rgba(255, 200, 214, 0.5);
+  --n-pink-line: rgba(219, 130, 158, 0.42);
+  --n-pink-solid: #ffbccd;
+  --n-mint: rgba(178, 232, 208, 0.5);
+  --n-mint-line: rgba(90, 178, 145, 0.42);
+  --n-mint-solid: #a5e3c9;
+  --n-blue: rgba(190, 214, 255, 0.5);
+  --n-blue-line: rgba(110, 145, 214, 0.42);
+  --n-blue-solid: #b3cdff;
+  --n-lilac: rgba(219, 205, 255, 0.5);
+  --n-lilac-line: rgba(150, 128, 214, 0.42);
+  --n-lilac-solid: #cfc0ff;
+
+  /* 말풍선은 배경 위에 확실히 얹혀야 해서 반투명이라도 진하게 */
+  --tip-bg: rgba(52, 48, 66, 0.94);
+  --tip-line: rgba(255, 255, 255, 0.14);
+  --tip-ink: #f4f2f8;
+  --tip-dim: #b6b1c4;
+
+  --sheet-scrim: rgba(250, 248, 252, 0.55);
+  --sheet-bg: rgba(255, 255, 255, 0.94);
+  /* 시트는 배경이 불투명해서 반투명 흰색 --surface 가 안 보인다. 별도 회색을 쓴다. */
+  --ctl: rgba(120, 120, 155, 0.11);
+  --ctl-hi: rgba(120, 120, 155, 0.2);
+  --shadow: 0 8px 32px rgba(150, 150, 180, 0.18);
+  --radius: 22px;
+  --radius-sm: 12px;
+  --radius-xs: 8px;
+  --ease: cubic-bezier(0.32, 0.72, 0, 1);
+
+  --widget-opacity: 0.92;
+}
+
+/*
+  어두운 배경화면 위.
+  흰 유리를 그대로 쓰면 회색 떡이 되고 글씨가 안 읽혀서,
+  유리를 어둡게 뒤집고 글자를 밝게 바꾼다. 포인트 색은 채도를 낮춰
+  어두운 바탕에서 튀지 않게 조정.
+*/
+:root[data-backdrop='dark'] {
+  /* 어두운 배경화면 위에서는 같은 알파라도 훨씬 더 비쳐 보인다.
+     밝은 쪽(0.66)보다 오히려 더 불투명하게 잡아야 글씨가 읽힌다. */
+  --glass: rgba(34, 32, 44, 0.88);
+  --glass-edge: rgba(255, 255, 255, 0.18);
+  --surface: rgba(255, 255, 255, 0.11);
+  --surface-hi: rgba(255, 255, 255, 0.22);
+
+  --text: #f0eef5;
+  --text-mid: #bdb9c9;
+  --text-dim: #8b8798;
+  --line: rgba(255, 255, 255, 0.12);
+
+  --accent: #ff9dba;
+  --accent-soft: rgba(255, 157, 186, 0.24);
+  --accent-ink: #ffc0d3;
+  --accent-2: #86dcbb;
+  --accent-2-ink: #9ceccd;
+  --sat: #93b9ff;
+  --sun: #ff9aa2;
+
+  --work-bg: rgba(150, 172, 255, 0.22);
+  --work-ink: #a9bcff;
+  --todo-bg: rgba(255, 186, 120, 0.22);
+  --todo-ink: #ffcb96;
+  --todo-line: rgba(255, 190, 130, 0.75);
+  --todo-bg-done: rgba(255, 255, 255, 0.06);
+  --note-bg: rgba(255, 226, 140, 0.3);
+  --note-bg-hi: rgba(255, 226, 140, 0.4);
+  --note-line: rgba(255, 226, 140, 0.42);
+  --note-ink: #f2d98a;
+
+  /* 쪽지는 글을 읽는 물건이라 어두울 때 특히 더 채워줘야 한다.
+     다만 채도가 높으면 올리브/자주처럼 탁해 보여서, 각 채널을 회색 쪽으로
+     조금 당겨 눌러 놓았다. 색끼리 구분은 되면서 톤은 가라앉는다.
+     (동그라미 표시용 -solid 는 작아서 선명해야 하므로 그대로 둔다) */
+  --n-yellow: rgba(137, 123, 78, 0.55);
+  --n-yellow-line: rgba(255, 226, 140, 0.4);
+  --n-yellow-solid: #e8cd7d;
+  --n-pink: rgba(136, 89, 103, 0.55);
+  --n-pink-line: rgba(255, 175, 198, 0.4);
+  --n-pink-solid: #e8a2b8;
+  --n-mint: rgba(70, 112, 98, 0.55);
+  --n-mint-line: rgba(140, 224, 192, 0.4);
+  --n-mint-solid: #8ccfb4;
+  --n-blue: rgba(79, 97, 134, 0.55);
+  --n-blue-line: rgba(160, 194, 255, 0.4);
+  --n-blue-solid: #9fb9e8;
+  --n-lilac: rgba(102, 93, 136, 0.55);
+  --n-lilac-line: rgba(200, 182, 255, 0.4);
+  --n-lilac-solid: #b8a8e8;
+
+  --tip-bg: rgba(70, 66, 86, 0.96);
+  --tip-line: rgba(255, 255, 255, 0.18);
+  --tip-ink: #f4f2f8;
+  --tip-dim: #bdb8cc;
+
+  --sheet-scrim: rgba(18, 16, 26, 0.5);
+  --sheet-bg: rgba(44, 41, 55, 0.96);
+  --ctl: rgba(255, 255, 255, 0.1);
+  --ctl-hi: rgba(255, 255, 255, 0.2);
+  --shadow: 0 10px 36px rgba(0, 0, 0, 0.42);
+}

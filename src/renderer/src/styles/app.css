@@ -1,0 +1,1567 @@
+@import '@fontsource/jua/korean-400.css';
+@import '@fontsource/jua/latin-400.css';
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  overflow: hidden;
+}
+
+/*
+  글꼴은 Jua 하나로 간다.
+
+  Jua 는 굵기가 400 하나뿐이라 font-weight 로는 아무것도 구분되지 않는다
+  (400/600/700 이 픽셀 단위로 같게 그려진다 — 가짜 굵게조차 걸리지 않는다).
+  달력은 색·모양·크기가 구분을 떠받치므로 괜찮지만, 굵기에 기대는 곳이 하나 있어
+  (메모의 **굵게**) 거기만 색으로 대신한다. 아래 .note .md strong 참고.
+
+  한글 폰트에는 이모지 자형이 없다. 명시해두지 않으면 흑백 자형이나 네모로
+  떨어지므로 컬러 이모지 폰트를 항상 뒤에 붙인다.
+
+  자간은 Jua 가 기본적으로 빡빡해서 조금 풀어 놓았다.
+*/
+body {
+  font-family:
+    var(--font-ui),
+    'Malgun Gothic',
+    'Segoe UI',
+    sans-serif,
+    'Segoe UI Emoji',
+    'Apple Color Emoji',
+    'Noto Color Emoji';
+  letter-spacing: 0.012em;
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.4;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+  cursor: default;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+input {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  outline: none;
+}
+
+/* ============ 위젯 셸 ============ */
+
+/*
+  투명도를 위젯 전체에 한 번에 걸면 자식이 부모보다 진해질 수 없다.
+  메모는 글을 읽는 물건이라 달력보다 진해야 해서, 유리 배경을 ::before 로 떼어내고
+  내용 묶음(main-col / notes)에 각각 다른 불투명도를 준다.
+*/
+.widget {
+  width: 100%;
+  height: 100%;
+  /* 설정 시트가 inset:0 으로 덮을 기준점 */
+  position: relative;
+  /* 달력(main-col) 과 메모장(notes) 을 가로로 놓는다 */
+  display: flex;
+  flex-direction: row;
+  padding: 12px 14px 10px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  /* 유리 배경 / 달력 / 메모장 세 군데가 이 값을 기준으로 각자 불투명도를 잡는다.
+     예전엔 마우스를 올리면 100% 로 올렸는데, 지나갈 때마다 밝기가 출렁여
+     오히려 어지러워서 뺐다. 이제 설정값이 그대로 유지된다. */
+  --live-opacity: var(--widget-opacity);
+}
+
+.widget::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--glass);
+  backdrop-filter: blur(28px) saturate(1.5);
+  border: 1px solid var(--glass-edge);
+  opacity: var(--live-opacity);
+  transition:
+    opacity 250ms var(--ease),
+    background 400ms var(--ease);
+  pointer-events: none;
+}
+
+/* 달력 쪽 세로 스택 */
+.main-col {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  opacity: var(--live-opacity);
+  transition: opacity 250ms var(--ease);
+}
+
+.drag {
+  -webkit-app-region: drag;
+}
+
+.no-drag {
+  -webkit-app-region: no-drag;
+}
+
+/* ============ 헤더 (시계 / D-day) ============ */
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 2px 2px 10px;
+  flex-shrink: 0;
+}
+
+.header .lead {
+  min-width: 0;
+}
+
+.header .date-line {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.header .big {
+  font-size: 30px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  margin-top: 1px;
+}
+
+.header .big .ampm {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-dim);
+  margin-right: 5px;
+  letter-spacing: 0;
+  vertical-align: 3px;
+}
+
+.header .dday-label {
+  font-size: 12px;
+  color: var(--accent-ink);
+  font-weight: 600;
+}
+
+.header .tools {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.icon-btn {
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--text-dim);
+  transition:
+    background 160ms var(--ease),
+    color 160ms var(--ease);
+}
+
+.icon-btn:hover {
+  background: var(--surface-hi);
+  color: var(--text);
+}
+
+/* ============ 달력 ============ */
+
+.cal {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.cal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2px 6px;
+  flex-shrink: 0;
+}
+
+.cal-head .title {
+  font-size: 14.5px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  padding: 0;
+}
+
+.cal-head .nav {
+  display: flex;
+  gap: 1px;
+}
+
+.weekdays,
+.week {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+
+.weekdays {
+  padding-bottom: 4px;
+  flex-shrink: 0;
+}
+
+.weekdays span {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-dim);
+}
+
+.weekdays span:first-child {
+  color: var(--sun);
+}
+
+.weekdays span:last-child {
+  color: var(--sat);
+}
+
+/* 월 전환 슬라이드를 위해 뷰포트로 감싼다 */
+.grid-viewport {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.grid {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  animation: slide-in 220ms var(--ease);
+}
+
+.grid[data-dir='prev'] {
+  animation-name: slide-in-prev;
+}
+
+.week {
+  flex: 1;
+  min-height: 0;
+  gap: 2px;
+}
+
+@keyframes slide-in {
+  from {
+    opacity: 0.3;
+    transform: translateX(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slide-in-prev {
+  from {
+    opacity: 0.3;
+    transform: translateX(-14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* ---- 날짜 칸 ---- */
+
+.cell {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 3px 4px 2px;
+  border-radius: 9px;
+  background: var(--surface);
+  border: 1px solid transparent;
+  overflow: hidden;
+  transition:
+    background 160ms var(--ease),
+    border-color 160ms var(--ease);
+}
+
+.cell:hover {
+  background: var(--surface-hi);
+}
+
+.cell[data-outside='true'] {
+  background: transparent;
+  opacity: 0.42;
+}
+
+.cell[data-selected='true'] {
+  border-color: var(--accent-ink);
+}
+
+.cell-head {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.cell-head .n {
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 2px;
+  display: grid;
+  place-items: center;
+  border-radius: 5px;
+}
+
+.cell[data-dow='0'] .n {
+  color: var(--sun);
+}
+
+.cell[data-dow='6'] .n {
+  color: var(--sat);
+}
+
+/* 오늘 — 연분홍 배경. 흰 글씨는 연분홍 위에서 흐릿해서 진한 로즈로 쓴다. */
+.cell[data-today='true'] .n {
+  background: var(--accent);
+  color: #8f3355;
+  font-weight: 700;
+}
+
+:root[data-backdrop='dark'] .cell[data-today='true'] .n {
+  color: #4a1f30;
+}
+
+/* 근무시간 — 매일 달라서 제일 먼저 눈에 띄어야 한다.
+   'HH:MM~HH:MM' 11글자가 좁은 칸에 들어가야 해서 자간을 바짝 좁힌다.
+   .cell-head(넓을 때)와 .work-row(좁을 때) 양쪽에 쓰이므로 .cell 기준으로 잡는다. */
+.cell .work {
+  font-size: 9px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.04em;
+  color: var(--work-ink);
+  background: var(--work-bg);
+  border-radius: 4px;
+  padding: 1px 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+/* 넓을 때 — 날짜 숫자 오른쪽에 붙는다 */
+.cell-head .work {
+  margin-left: auto;
+}
+
+/* 칸이 좁아지면 근무시간이 날짜 숫자 옆에 안 들어간다.
+   잘라 보여주느니 아랫줄로 내려 칸 너비를 통째로 쓴다.
+   (MonthGrid 의 HEAD_H_COMPACT 가 이 줄 높이를 감안한다) */
+.cell .work-row {
+  height: 13px;
+  display: flex;
+  flex-shrink: 0;
+  padding-top: 1px;
+}
+
+.cell .work-row .work {
+  margin-left: 0;
+  width: 100%;
+  text-align: center;
+}
+
+.cell-items {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding-top: 1px;
+}
+
+/* 일정 묶음은 위에서, 할 일 묶음은 아래에서 차오른다.
+   둘이 물리적으로 떨어져 있어야 칸을 훑을 때 헷갈리지 않는다. */
+.grp {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.td-grp {
+  margin-top: auto;
+}
+
+/* 항목 한 줄 — 높이를 MonthGrid.tsx 의 ITEM_H 와 맞춰야 한다.
+   line-height:1 이면 Jua 의 글자 잉크가 줄 높이에 딱 차서 윗부분이 잘린다. */
+.it {
+  height: 16px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10.5px;
+  line-height: 1.3;
+  letter-spacing: 0.015em;
+  border-radius: 4px;
+  padding: 0 1px;
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+.it .tx {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---- 일정: 배경 없이 왼쪽 민트 막대 + 시간 ---- */
+
+.it.ev .bar {
+  width: 2.5px;
+  height: 10px;
+  border-radius: 2px;
+  background: var(--accent-2-ink);
+  flex-shrink: 0;
+}
+
+.it.ev .t {
+  font-size: 9.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
+
+/* ---- 할 일: 살구색으로 채운 칩 ----
+   빈 동그라미만으로는 존재감이 약해서 '아직 안 한 일'이 눈에 안 들어온다.
+   칩을 채워서 남은 일이 먼저 보이게 하고, 끝낸 것은 배경을 빼서 물러나게 한다. */
+
+.it.td {
+  background: var(--todo-bg);
+  padding: 0 3px 0 2px;
+  transition:
+    background 260ms var(--ease),
+    opacity 260ms var(--ease);
+}
+
+.it.td .tx {
+  color: var(--todo-ink);
+  font-weight: 500;
+}
+
+.it.td .box {
+  width: 10px;
+  height: 10px;
+  flex-shrink: 0;
+  /* 둥근 사각형 — 일정에는 없는 모양이라 그것만으로도 구분된다 */
+  border-radius: 3px;
+  border: 1.4px solid var(--todo-line);
+  display: grid;
+  place-items: center;
+  padding: 0;
+  transition:
+    background 200ms var(--ease),
+    border-color 200ms var(--ease);
+}
+
+.it.td .box svg {
+  opacity: 0;
+  transform: scale(0.4);
+  transition:
+    opacity 180ms var(--ease),
+    transform 240ms var(--ease);
+}
+
+.it.td:hover .box {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.it.td[data-done='true'] {
+  background: var(--todo-bg-done);
+}
+
+.it.td[data-done='true'] .box {
+  background: var(--accent-2);
+  border-color: var(--accent-2);
+}
+
+.it.td[data-done='true'] .box svg {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.it.td[data-done='true'] .tx {
+  color: var(--text-dim);
+  font-weight: 400;
+  text-decoration: line-through;
+  opacity: 0.8;
+}
+
+.more {
+  height: 16px;
+  display: flex;
+  align-items: center;
+  font-size: 9.5px;
+  color: var(--text-dim);
+  padding-left: 3px;
+  flex-shrink: 0;
+}
+
+/* ============ 선택한 날짜 편집줄 ============ */
+
+.editor {
+  flex-shrink: 0;
+  padding-top: 8px;
+  margin-top: 6px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.editor-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 26px;
+}
+
+.editor .day-label {
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.editor .work-fields {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: auto;
+}
+
+.editor .work-tag {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--work-ink);
+  margin-right: 1px;
+}
+
+.editor .hm {
+  width: 42px;
+  text-align: center;
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+  padding: 3px 0;
+  border-radius: 6px;
+  background: var(--surface);
+  transition: background 150ms var(--ease);
+}
+
+.editor .hm:hover,
+.editor .hm:focus {
+  background: var(--surface-hi);
+}
+
+.editor .hm::placeholder {
+  color: var(--text-dim);
+  opacity: 0.7;
+}
+
+.editor .tilde {
+  color: var(--text-dim);
+  font-size: 11px;
+}
+
+.editor .chip {
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  color: var(--work-ink);
+  background: var(--work-bg);
+  border-radius: 5px;
+  padding: 2px 5px;
+  margin-left: 2px;
+  transition: filter 150ms var(--ease);
+}
+
+.editor .chip:hover {
+  filter: brightness(0.94) saturate(1.2);
+}
+
+/* 일정 / 할 일 전환 */
+.editor .seg {
+  display: flex;
+  gap: 1px;
+  padding: 2px;
+  border-radius: 999px;
+  background: var(--surface);
+  flex-shrink: 0;
+}
+
+.editor .seg button {
+  font-size: 10.5px;
+  font-weight: 500;
+  color: var(--text-dim);
+  padding: 3px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+  transition:
+    background 180ms var(--ease),
+    color 180ms var(--ease);
+}
+
+.editor .seg button[data-active='true'] {
+  background: var(--surface-hi);
+  color: var(--text);
+  font-weight: 600;
+}
+
+.editor .add {
+  border-radius: 8px;
+  padding: 2px 4px 2px 2px;
+  transition: background 150ms var(--ease);
+}
+
+.editor .add:hover,
+.editor .add:focus-within {
+  background: var(--surface);
+}
+
+.editor .plus {
+  display: grid;
+  place-items: center;
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
+
+.editor .add > input {
+  flex: 1;
+  min-width: 0;
+  font-size: 12.5px;
+}
+
+.editor .add > input::placeholder {
+  color: var(--text-dim);
+}
+
+.editor .add > input.time-in {
+  flex: 0 0 46px;
+}
+
+/* ============ 브라우저 미리보기 전용 ============
+   크롬에서 http://localhost:5173 을 열었을 때만 적용된다.
+   Electron 창에서는 body 에 .in-electron 이 붙어 아무 영향이 없다. */
+
+body.in-browser {
+  background:
+    radial-gradient(1200px 800px at 15% 10%, #ffd9e4 0%, transparent 55%),
+    radial-gradient(1000px 700px at 85% 80%, #cfeee2 0%, transparent 55%),
+    linear-gradient(140deg, #f2eaff 0%, #e6f0ff 45%, #fff2f6 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 실제 기본 창 크기와 같게 (resize 핸들로 늘려볼 수 있다) */
+body.in-browser #root {
+  width: 960px;
+  height: 800px;
+  transition: width 200ms var(--ease);
+  resize: both;
+  overflow: hidden;
+  min-width: 420px;
+  min-height: 520px;
+}
+
+/* Electron 은 창 자체가 넓어지지만 브라우저엔 창이 없으므로 여기서 흉내낸다 */
+body.in-browser:has(.notes) #root {
+  width: 1240px;
+}
+
+body.in-browser .widget {
+  box-shadow:
+    var(--shadow),
+    0 18px 50px rgba(120, 110, 150, 0.28);
+}
+
+body.in-browser .drag {
+  -webkit-app-region: none;
+}
+
+body.in-browser.bg-dark {
+  background: linear-gradient(150deg, #2a2438 0%, #1e2a3a 50%, #35283a 100%);
+}
+
+body.in-browser.bg-photo {
+  background:
+    radial-gradient(900px 600px at 70% 20%, rgba(255, 200, 120, 0.55) 0%, transparent 60%),
+    radial-gradient(800px 900px at 20% 80%, rgba(90, 130, 200, 0.6) 0%, transparent 60%),
+    linear-gradient(160deg, #4a6d8c 0%, #7a8fa6 40%, #d8a98f 100%);
+}
+
+body.in-browser.bg-busy {
+  background:
+    repeating-linear-gradient(45deg, #dfe6ef 0 18px, #eef2f7 18px 36px),
+    linear-gradient(#eef2f7, #eef2f7);
+}
+
+.bg-switcher {
+  /* 위젯이 커져서 화면 아래 가운데는 위젯과 겹친다. 구석으로 뺀다. */
+  position: fixed;
+  bottom: 10px;
+  right: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.66);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 4px 16px rgba(120, 110, 150, 0.22);
+  color: #3a3a44;
+  z-index: 10;
+}
+
+.bg-switcher button {
+  width: 24px;
+  height: 24px;
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  border-radius: 50%;
+  padding: 0;
+  transition: transform 150ms var(--ease);
+}
+
+.bg-switcher button:hover {
+  transform: scale(1.15);
+}
+
+.bg-switcher button[data-active='true'] {
+  outline: 2px solid #de6c90;
+  outline-offset: 2px;
+}
+
+.bg-switcher .sep {
+  width: 1px;
+  height: 16px;
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.bg-switcher .note {
+  font-size: 11px;
+  color: #6e6e7e;
+  white-space: nowrap;
+}
+
+/* ============ 설정 시트 ============
+   창이 하나뿐이라 별도 창 대신 위젯 위에 덮는다. */
+
+.sheet {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 16px;
+  background: var(--sheet-scrim);
+  backdrop-filter: blur(3px);
+  animation: fade-in 160ms var(--ease);
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.sheet-body {
+  width: 100%;
+  max-width: 380px;
+  max-height: 100%;
+  overflow-y: auto;
+  padding: 14px 16px 16px;
+  border-radius: 16px;
+  background: var(--sheet-bg);
+  border: 1px solid var(--glass-edge);
+  box-shadow: 0 12px 40px rgba(60, 55, 85, 0.28);
+  animation: sheet-in 220ms var(--ease);
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+
+@keyframes sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.sheet-head h2 {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.sheet .field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 30px;
+  margin-top: 8px;
+}
+
+.sheet .lb {
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.sheet .ctl {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+
+.sheet .ctl em {
+  font-style: normal;
+  font-size: 11px;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+  width: 32px;
+  text-align: right;
+}
+
+.sheet input[type='range'] {
+  width: 130px;
+  accent-color: var(--accent-ink);
+}
+
+.sheet input[type='checkbox'] {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--accent-2-ink);
+  cursor: pointer;
+}
+
+.sheet .hm,
+.sheet .txt {
+  font-size: 11.5px;
+  padding: 4px 6px;
+  border-radius: 6px;
+  background: var(--ctl);
+  transition: background 150ms var(--ease);
+}
+
+.sheet .hm {
+  width: 46px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.sheet .txt {
+  width: 120px;
+}
+
+.sheet .txt.date {
+  width: 118px;
+  font-variant-numeric: tabular-nums;
+  color-scheme: light;
+}
+
+:root[data-backdrop='dark'] .sheet .txt.date {
+  color-scheme: dark;
+}
+
+.sheet .hm:hover,
+.sheet .hm:focus,
+.sheet .txt:hover,
+.sheet .txt:focus {
+  background: var(--ctl-hi);
+}
+
+.sheet .tilde {
+  color: var(--text-dim);
+  font-size: 11px;
+}
+
+/* 자동 / 밝게 / 어둡게 */
+.sheet .seg-wide {
+  padding: 2px;
+  border-radius: 999px;
+  background: var(--ctl);
+  gap: 1px;
+}
+
+.sheet .seg-wide button {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-dim);
+  padding: 3px 10px;
+  border-radius: 999px;
+  transition:
+    background 180ms var(--ease),
+    color 180ms var(--ease);
+}
+
+.sheet .seg-wide button[data-active='true'] {
+  background: var(--sheet-bg);
+  color: var(--text);
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(80, 75, 110, 0.16);
+}
+
+.sheet .hint {
+  font-size: 10.5px;
+  line-height: 1.5;
+  color: var(--text-dim);
+  padding: 2px 1px 0;
+}
+
+.sheet .hint.foot {
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+/* ============ 오른쪽 메모장 ============
+   접고 펼 수 있다. 펼치면 창 자체가 넓어지므로(main 의 window:notes)
+   달력이 좁아지지 않는다. 화면에 자리가 없으면 달력이 대신 줄어든다. */
+
+.notes {
+  position: relative;
+  /* 폭은 설정값(끌어서 조절)이 인라인으로 넣는다 */
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  margin-left: 12px;
+  padding-left: 12px;
+  border-left: 1px solid var(--line);
+  min-width: 0;
+  animation: notes-in 220ms var(--ease);
+  /* 달력보다 한 단계 진하게. 1을 넘지 않도록 min() 으로 묶는다. */
+  opacity: min(1, calc(var(--live-opacity) + 0.28));
+  transition: opacity 250ms var(--ease);
+}
+
+@keyframes notes-in {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.notes-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-bottom: 8px;
+  flex-shrink: 0;
+}
+
+.notes-head .add-note {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 6px 0;
+  border-radius: 9px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  transition:
+    background 160ms var(--ease),
+    border-color 160ms var(--ease);
+}
+
+.notes-head .add-note:hover {
+  background: var(--surface-hi);
+  border-color: var(--note-line);
+}
+
+.notes-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding-right: 3px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+
+.notes-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.notes-list::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 4px;
+}
+
+/* 쪽지 한 장. 기본은 노란 메모지, data-color 로 5가지 중에 고른다. */
+.note {
+  background: var(--n-bg);
+  border: 1px solid var(--n-line);
+  border-radius: 10px;
+  padding: 7px 8px 4px;
+  transition:
+    border-color 160ms var(--ease),
+    background 160ms var(--ease);
+}
+
+.note[data-color='yellow'] {
+  --n-bg: var(--n-yellow);
+  --n-line: var(--n-yellow-line);
+}
+.note[data-color='pink'] {
+  --n-bg: var(--n-pink);
+  --n-line: var(--n-pink-line);
+}
+.note[data-color='mint'] {
+  --n-bg: var(--n-mint);
+  --n-line: var(--n-mint-line);
+}
+.note[data-color='blue'] {
+  --n-bg: var(--n-blue);
+  --n-line: var(--n-blue-line);
+}
+.note[data-color='lilac'] {
+  --n-bg: var(--n-lilac);
+  --n-line: var(--n-lilac-line);
+}
+
+.note:focus-within {
+  border-color: var(--n-line);
+  filter: saturate(1.25) brightness(1.02);
+}
+
+.note textarea {
+  width: 100%;
+  display: block;
+  resize: none;
+  overflow: hidden;
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--text);
+  background: none;
+  border: none;
+  outline: none;
+  /* 메모는 읽고 고치는 물건이라 드래그 선택이 되어야 한다 */
+  user-select: text;
+  cursor: text;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.note textarea::placeholder {
+  color: var(--text-dim);
+}
+
+.note-foot {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 16px;
+  margin-top: 2px;
+}
+
+.note-foot .when {
+  font-size: 9.5px;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.note-foot .swatches {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+  margin-right: 4px;
+  opacity: 0;
+  transition: opacity 150ms var(--ease);
+}
+
+.note:hover .swatches,
+.note:focus-within .swatches {
+  opacity: 1;
+}
+
+.note-foot .sw {
+  /* 작은 표적이라 조금 키운다 — 자주 누르는 건 아니지만 빗맞으면 성가시다 */
+  width: 13px;
+  height: 13px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.14);
+  transition: transform 140ms var(--ease);
+}
+
+.note-foot .sw:hover {
+  transform: scale(1.25);
+}
+
+.note-foot .sw[data-active='true'] {
+  box-shadow: 0 0 0 1.5px var(--text-dim);
+}
+
+.note-foot .sw[data-color='yellow'] {
+  background: var(--n-yellow-solid);
+}
+.note-foot .sw[data-color='pink'] {
+  background: var(--n-pink-solid);
+}
+.note-foot .sw[data-color='mint'] {
+  background: var(--n-mint-solid);
+}
+.note-foot .sw[data-color='blue'] {
+  background: var(--n-blue-solid);
+}
+.note-foot .sw[data-color='lilac'] {
+  background: var(--n-lilac-solid);
+}
+
+.note-foot .del {
+  width: 16px;
+  height: 16px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--text-dim);
+  opacity: 0;
+  transition:
+    opacity 150ms var(--ease),
+    background 150ms var(--ease),
+    color 150ms var(--ease);
+}
+
+.note:hover .del,
+.note:focus-within .del {
+  opacity: 1;
+}
+
+.note-foot .del:hover {
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+}
+
+.notes .empty {
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 11.5px;
+  line-height: 1.7;
+  padding: 20px 0;
+}
+
+/* 접혀 있을 때 오른쪽 가장자리에 남는 손잡이 */
+.notes-tab {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 54px;
+  display: grid;
+  place-items: center;
+  color: var(--text-dim);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-right: none;
+  border-radius: 9px 0 0 9px;
+  opacity: 0;
+  transition:
+    opacity 200ms var(--ease),
+    background 160ms var(--ease),
+    color 160ms var(--ease);
+}
+
+/* 평소엔 숨어 있다가 위젯에 마우스를 올리면 나타난다 */
+.widget:hover .notes-tab {
+  opacity: 1;
+}
+
+.notes-tab:hover {
+  background: var(--note-bg-hi);
+  color: var(--note-ink);
+}
+
+/* 헤더의 메모장 버튼 — 펼쳐져 있으면 켜진 상태로 보인다 */
+.icon-btn[data-on='true'] {
+  background: var(--note-bg-hi);
+  color: var(--note-ink);
+}
+
+/* ============ 항목 수정 모드 ============ */
+
+/* 달력 안에서는 커서 모양을 바꾸지 않는다.
+   칸을 훑을 때마다 화살표/손가락/쥐는손이 번갈아 바뀌면 산만하다.
+   (전역 button 규칙까지 덮어야 칸 안 체크박스도 안 바뀐다)
+   클릭할 수 있다는 건 배경이 밝아지는 것으로 알린다. */
+.grid-viewport,
+.grid-viewport * {
+  cursor: default;
+}
+
+.it.ev:hover {
+  background: var(--surface-hi);
+}
+
+.it.td:hover {
+  filter: brightness(1.04) saturate(1.1);
+}
+
+/* 지금 아래에서 고치고 있는 항목 */
+.it[data-editing='true'] {
+  outline: 1.5px solid var(--accent-ink);
+  outline-offset: -1px;
+}
+
+.editor-row.add[data-editing='true'] {
+  background: var(--accent-soft);
+}
+
+.editor .edit-tag {
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  color: var(--accent-2-ink);
+  background: rgba(168, 230, 207, 0.28);
+}
+
+.editor .edit-tag[data-kind='todo'] {
+  color: var(--todo-ink);
+  background: var(--todo-bg);
+}
+
+.editor .edit-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.editor .act {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 9px;
+  border-radius: 7px;
+  white-space: nowrap;
+  transition:
+    background 150ms var(--ease),
+    color 150ms var(--ease);
+}
+
+.editor .act.save {
+  color: var(--accent-2-ink);
+  background: rgba(168, 230, 207, 0.3);
+}
+
+.editor .act.save:hover {
+  background: rgba(168, 230, 207, 0.5);
+}
+
+.editor .act.danger {
+  color: var(--accent-ink);
+  background: var(--accent-soft);
+}
+
+.editor .act.danger:hover {
+  background: rgba(255, 179, 198, 0.5);
+}
+
+/* ============ 드래그로 날짜 옮기기 ============ */
+
+.it[data-dragging='true'] {
+  opacity: 0.35;
+}
+
+/* 떨굴 수 있는 칸 */
+.cell[data-drop='true'] {
+  background: var(--accent-soft);
+  border-color: var(--accent-ink);
+  border-style: dashed;
+}
+
+/* ---- 메모장 폭 조절 손잡이 ---- */
+
+.notes-resizer {
+  position: absolute;
+  left: -6px;
+  top: 0;
+  bottom: 0;
+  width: 11px;
+  z-index: 2;
+  cursor: col-resize;
+  /* 가는 선이라 표적이 작으면 잡기 어렵다 — 보이는 것보다 넓게 잡는다 */
+}
+
+.notes-resizer::after {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 8px;
+  bottom: 8px;
+  width: 1px;
+  border-radius: 1px;
+  background: var(--accent-ink);
+  opacity: 0;
+  transition: opacity 150ms var(--ease);
+}
+
+.notes-resizer:hover::after,
+.notes-resizer[data-active='true']::after {
+  opacity: 0.7;
+}
+
+/* ---- 마크다운 렌더 ---- */
+
+.note .md {
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--text);
+  /* 읽는 물건이라 드래그 선택이 되어야 한다 */
+  user-select: text;
+  outline: none;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.note .md .ph {
+  color: var(--text-dim);
+}
+
+/* 메모는 좁고 짧아서 여백을 크게 잡으면 금방 답답해진다 */
+.note .md > *:first-child {
+  margin-top: 0;
+}
+
+.note .md > *:last-child {
+  margin-bottom: 0;
+}
+
+.note .md p {
+  margin: 0 0 5px;
+}
+
+.note .md h1,
+.note .md h2,
+.note .md h3,
+.note .md h4,
+.note .md h5,
+.note .md h6 {
+  font-size: 12.5px;
+  font-weight: 700;
+  margin: 8px 0 4px;
+  letter-spacing: -0.01em;
+}
+
+.note .md h1 {
+  font-size: 14px;
+}
+
+.note .md h2 {
+  font-size: 13px;
+}
+
+.note .md ul,
+.note .md ol {
+  margin: 0 0 5px;
+  padding-left: 16px;
+}
+
+.note .md li {
+  margin: 1px 0;
+}
+
+.note .md li::marker {
+  color: var(--text-dim);
+}
+
+/* GFM 체크리스트 — 눌러서 바로 토글된다 (원본의 [ ] 가 함께 바뀐다) */
+.note .md input[type='checkbox'] {
+  width: 13px;
+  height: 13px;
+  margin: 0 5px 0 -16px;
+  vertical-align: -2px;
+  accent-color: var(--accent-2-ink);
+}
+
+.note .md li:has(input[type='checkbox']) {
+  list-style: none;
+}
+
+.note .md code {
+  font-family: 'Cascadia Mono', Consolas, monospace;
+  font-size: 11px;
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: rgba(120, 120, 155, 0.16);
+}
+
+.note .md pre {
+  margin: 0 0 5px;
+  padding: 6px 8px;
+  border-radius: 7px;
+  background: rgba(120, 120, 155, 0.16);
+  overflow-x: auto;
+}
+
+.note .md pre code {
+  padding: 0;
+  background: none;
+}
+
+.note .md blockquote {
+  margin: 0 0 5px;
+  padding-left: 8px;
+  border-left: 2px solid var(--line);
+  color: var(--text-mid);
+}
+
+.note .md hr {
+  margin: 7px 0;
+  border: none;
+  border-top: 1px solid var(--line);
+}
+
+.note .md a {
+  color: var(--accent-ink);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.note .md del {
+  color: var(--text-dim);
+}
+
+/* Jua 는 굵기가 하나뿐이라 <strong> 이 굵어지지 않는다.
+   마크다운의 **굵게** 가 그냥 사라지지 않도록 색으로 대신 표시한다. */
+.note .md strong {
+  color: var(--accent-ink);
+}
+
+.note .md table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+  margin: 0 0 5px;
+}
+
+.note .md th,
+.note .md td {
+  border: 1px solid var(--line);
+  padding: 2px 5px;
+  text-align: left;
+}
+
+/* 편집 중일 때는 원본 그대로 — 등폭이 아니어도 되지만 기호가 또렷해야 한다 */
+.note[data-editing='true'] textarea {
+  font-variant-ligatures: none;
+}
+
+
+/* ============ 말풍선 ============
+   브라우저 기본 title 툴팁은 Win32 회색 상자라 위젯과 따로 논다.
+   title 대신 data-tip 을 쓰고 여기서 직접 그린다 (components/Tooltip.tsx). */
+
+.tip {
+  position: fixed;
+  z-index: 50;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 6px 9px;
+  border-radius: 9px;
+  background: var(--tip-bg);
+  border: 1px solid var(--tip-line);
+  box-shadow: 0 6px 20px rgba(50, 45, 70, 0.28);
+  backdrop-filter: blur(10px);
+  pointer-events: none;
+  animation: tip-in 120ms var(--ease);
+  /* 위로 뒤집힐 땐 자기 높이만큼 올라가야 한다 */
+}
+
+.tip[data-flip='true'] {
+  transform: translate(-50%, -100%);
+}
+
+@keyframes tip-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.tip-main {
+  font-size: 11.5px;
+  color: var(--tip-ink);
+  line-height: 1.35;
+  word-break: break-word;
+}
+
+/* 둘째 줄부터는 조작 안내 — 한 단계 물러나게 */
+.tip-sub {
+  font-size: 10.5px;
+  color: var(--tip-dim);
+  line-height: 1.35;
+}

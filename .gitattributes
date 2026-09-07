@@ -1,0 +1,9 @@
+# 저장소에는 LF 로 보관하고, 체크아웃할 때 각자 OS 에 맞춘다.
+# 이걸 두지 않으면 Windows 에서 받은 사람과 diff 가 통째로 어긋난다.
+* text=auto eol=lf
+
+# 바이너리는 건드리지 않는다
+*.png binary
+*.ico binary
+*.woff  binary
+*.woff2 binary
