@@ -53,6 +53,7 @@ export function registerIpc(win: BrowserWindow): void {
         id: uid(),
         date: input.date,
         title: input.title,
+        tag: input.tag,
         done: false,
         createdAt: new Date().toISOString()
       })

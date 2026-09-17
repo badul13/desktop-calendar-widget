@@ -1,5 +1,9 @@
 /** main 프로세스와 렌더러가 공유하는 데이터 모양 */
 
+/** 일정·할 일에 붙이는 분류 라벨. 한 항목에 하나만 붙는다. */
+export const ITEM_TAGS = ['ON', 'AS', '기타'] as const
+export type ItemTag = (typeof ITEM_TAGS)[number]
+
 export type CalEvent = {
   id: string
   providerId: 'local' | 'google'
@@ -8,6 +12,7 @@ export type CalEvent = {
   /** HH:mm, 종일 일정이면 null */
   time: string | null
   title: string
+  tag?: ItemTag
   color?: string
 }
 
@@ -16,6 +21,7 @@ export type Todo = {
   /** yyyy-MM-dd — 날짜 칸에 같이 보여주기 위해 할 일도 날짜를 갖는다 */
   date: string
   title: string
+  tag?: ItemTag
   done: boolean
   createdAt: string
 }
@@ -108,7 +114,7 @@ export const DEFAULT_DATA: AppData = {
 }
 
 export type NewEvent = Omit<CalEvent, 'id' | 'providerId'>
-export type NewTodo = Pick<Todo, 'date' | 'title'>
+export type NewTodo = Pick<Todo, 'date' | 'title' | 'tag'>
 
 /** 달력 칸에서 클릭해 편집 중인 항목 */
 export type EditTarget =

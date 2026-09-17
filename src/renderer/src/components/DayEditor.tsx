@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import type { EditTarget, WorkHours } from '@shared/types'
+import { ITEM_TAGS, type EditTarget, type ItemTag, type WorkHours } from '@shared/types'
 import { listHeading } from '../lib/date'
 import { Check, Close, Plus } from '../lib/icons'
 
@@ -12,9 +12,14 @@ type Props = {
   /** 달력 칸에서 항목을 클릭하면 여기로 들어와 수정 모드가 된다 */
   editing: EditTarget | null
   onSetWorkHours: (h: WorkHours | null) => void
-  onAddEvent: (title: string, time: string | null) => void
-  onAddTodo: (title: string) => void
-  onSaveEdit: (target: EditTarget, title: string, time: string | null) => void
+  onAddEvent: (title: string, time: string | null, tag: ItemTag | undefined) => void
+  onAddTodo: (title: string, tag: ItemTag | undefined) => void
+  onSaveEdit: (
+    target: EditTarget,
+    title: string,
+    time: string | null,
+    tag: ItemTag | undefined
+  ) => void
   onDeleteEdit: (target: EditTarget) => void
   onCancelEdit: () => void
 }
@@ -49,6 +54,7 @@ export default function DayEditor({
   const [kind, setKind] = useState<Kind>('event')
   const [title, setTitle] = useState('')
   const [time, setTime] = useState('')
+  const [tag, setTag] = useState<ItemTag | undefined>(undefined)
   const [start, setStart] = useState('')
   const [end, setEnd] = useState('')
   const titleRef = useRef<HTMLInputElement>(null)
@@ -64,9 +70,11 @@ export default function DayEditor({
     if (!editing) {
       setTitle('')
       setTime('')
+      setTag(undefined)
       return
     }
     setTitle(editing.item.title)
+    setTag(editing.item.tag)
     setTime(editing.kind === 'event' ? (editing.item.time ?? '') : '')
     titleRef.current?.focus()
     titleRef.current?.select()
@@ -105,13 +113,14 @@ export default function DayEditor({
     const t = title.trim()
     if (!t) return
     if (editing) {
-      onSaveEdit(editing, t, editing.kind === 'event' ? normalizeTime(time) : null)
+      onSaveEdit(editing, t, editing.kind === 'event' ? normalizeTime(time) : null, tag)
       return
     }
-    if (kind === 'event') onAddEvent(t, normalizeTime(time))
-    else onAddTodo(t)
+    if (kind === 'event') onAddEvent(t, normalizeTime(time), tag)
+    else onAddTodo(t, tag)
     setTitle('')
     setTime('')
+    setTag(undefined)
     titleRef.current?.focus()
   }
 
@@ -181,6 +190,21 @@ export default function DayEditor({
           onChange={(e) => setTitle(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && submit()}
         />
+
+        {/* 라벨은 하나만 — 다른 걸 누르면 바뀌고, 고른 걸 다시 누르면 뗀다 */}
+        <span className="tag-pick">
+          {ITEM_TAGS.map((t) => (
+            <button
+              key={t}
+              className="tag"
+              data-tag={t}
+              data-active={tag === t}
+              onClick={() => setTag((cur) => (cur === t ? undefined : t))}
+            >
+              {t}
+            </button>
+          ))}
+        </span>
 
         {showTime && (
           <input

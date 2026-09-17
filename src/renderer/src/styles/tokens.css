@@ -30,6 +30,13 @@
   --todo-line: #d99751;
   /* 완료된 할 일은 배경을 빼서 뒤로 물러나게 */
   --todo-bg-done: rgba(140, 140, 165, 0.09);
+  /* 항목 라벨 — 일정·할 일 어디에 붙어도 읽히도록 작은 글자 배지로 */
+  --tag-on-bg: rgba(186, 160, 255, 0.3);
+  --tag-on-ink: #7a5cc7;
+  --tag-as-bg: rgba(255, 150, 180, 0.3);
+  --tag-as-ink: #c4507a;
+  --tag-etc-bg: rgba(140, 140, 165, 0.18);
+  --tag-etc-ink: #6e6e7e;
   /* 메모 — 기본은 노란 메모지. 달력의 세 색과 겹치지 않는 계열. */
   --note-bg: rgba(255, 232, 150, 0.26);
   --note-bg-hi: rgba(255, 232, 150, 0.42);
@@ -106,6 +113,12 @@
   --todo-ink: #ffcb96;
   --todo-line: rgba(255, 190, 130, 0.75);
   --todo-bg-done: rgba(255, 255, 255, 0.06);
+  --tag-on-bg: rgba(186, 160, 255, 0.26);
+  --tag-on-ink: #cdbaff;
+  --tag-as-bg: rgba(255, 150, 180, 0.24);
+  --tag-as-ink: #ffb3cb;
+  --tag-etc-bg: rgba(255, 255, 255, 0.14);
+  --tag-etc-ink: #c9c5d4;
   --note-bg: rgba(255, 226, 140, 0.3);
   --note-bg-hi: rgba(255, 226, 140, 0.4);
   --note-line: rgba(255, 226, 140, 0.42);

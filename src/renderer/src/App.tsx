@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import type { EditTarget, NoteColor } from '@shared/types'
+import type { EditTarget, ItemTag, NoteColor } from '@shared/types'
 import BgSwitcher from './components/BgSwitcher'
 import DayEditor from './components/DayEditor'
 import HeaderClock from './components/HeaderClock'
@@ -70,13 +70,18 @@ export default function App(): React.JSX.Element {
    * 그대로 저장하면 수정 중에 체크한 완료 상태나 드래그로 옮긴 날짜가
    * 조용히 되돌아간다. 그래서 지금 값을 다시 찾아 그 위에 얹는다.
    */
-  const saveEdit = (target: EditTarget, title: string, time: string | null): void => {
+  const saveEdit = (
+    target: EditTarget,
+    title: string,
+    time: string | null,
+    tag: ItemTag | undefined
+  ): void => {
     if (target.kind === 'event') {
       const cur = data.events.find((x) => x.id === target.item.id) ?? target.item
-      void bridge.updateEvent({ ...cur, title, time }).then(setData)
+      void bridge.updateEvent({ ...cur, title, time, tag }).then(setData)
     } else {
       const cur = data.todos.find((x) => x.id === target.item.id) ?? target.item
-      void bridge.updateTodo({ ...cur, title }).then(setData)
+      void bridge.updateTodo({ ...cur, title, tag }).then(setData)
     }
     setEditing(null)
   }
@@ -163,11 +168,11 @@ export default function App(): React.JSX.Element {
             defaultWorkHours={data.settings.defaultWorkHours}
             editing={editing}
             onSetWorkHours={(h) => void bridge.setWorkHours(selectedKey, h).then(setData)}
-            onAddEvent={(title, time) =>
-              void bridge.createEvent({ date: selectedKey, time, title }).then(setData)
+            onAddEvent={(title, time, tag) =>
+              void bridge.createEvent({ date: selectedKey, time, title, tag }).then(setData)
             }
-            onAddTodo={(title) =>
-              void bridge.createTodo({ date: selectedKey, title }).then(setData)
+            onAddTodo={(title, tag) =>
+              void bridge.createTodo({ date: selectedKey, title, tag }).then(setData)
             }
             onSaveEdit={saveEdit}
             onDeleteEdit={deleteEdit}

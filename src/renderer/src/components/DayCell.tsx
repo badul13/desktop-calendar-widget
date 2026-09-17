@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import type { CalEvent, Todo, WorkHours } from '@shared/types'
+import type { CalEvent, ItemTag, Todo, WorkHours } from '@shared/types'
 import { Check } from '../lib/icons'
 
 /** 드래그로 옮기는 중인 항목 */
@@ -41,6 +41,9 @@ function shortTime(t: string): string {
   const hh = String(Number(h))
   return m === '00' ? hh : `${hh}:${m}`
 }
+
+/** 말풍선 첫 줄에 붙이는 라벨 표기 */
+const tagText = (tag: ItemTag | undefined): string => (tag ? `[${tag}] ` : '')
 
 /**
  * 한 번 클릭 동작을 이만큼 미뤘다가, 더블클릭이 오면 취소한다.
@@ -195,7 +198,7 @@ export default function DayCell({
               draggable
               data-editing={editingId === e.id}
               data-dragging={draggingId === e.id}
-              data-tip={`${e.time ?? '종일'} ${e.title}\n두 번 클릭해서 수정 · 끌어서 날짜 이동`}
+              data-tip={`${e.time ?? '종일'} ${tagText(e.tag)}${e.title}\n두 번 클릭해서 수정 · 끌어서 날짜 이동`}
               onDragStart={(ev) => startDrag(ev, 'event', e.id)}
               onDragEnd={onDragEndItem}
               onClick={(ev) => {
@@ -214,6 +217,7 @@ export default function DayCell({
             >
               <span className="bar" style={e.color ? { background: e.color } : undefined} />
               {e.time && <span className="t">{e.time}</span>}
+              {e.tag && <span className="tag" data-tag={e.tag}>{e.tag}</span>}
               <span className="tx">{e.title}</span>
             </div>
           ))}
@@ -229,7 +233,7 @@ export default function DayCell({
               data-done={t.done}
               data-editing={editingId === t.id}
               data-dragging={draggingId === t.id}
-              data-tip={`${t.title}\n클릭해서 완료 · 두 번 클릭해서 수정 · 끌어서 날짜 이동`}
+              data-tip={`${tagText(t.tag)}${t.title}\n클릭해서 완료 · 두 번 클릭해서 수정 · 끌어서 날짜 이동`}
               onDragStart={(ev) => startDrag(ev, 'todo', t.id)}
               onDragEnd={onDragEndItem}
               onClick={(ev) => {
@@ -261,6 +265,7 @@ export default function DayCell({
               >
                 <Check size={8} />
               </button>
+              {t.tag && <span className="tag" data-tag={t.tag}>{t.tag}</span>}
               <span className="tx">{t.title}</span>
             </div>
           ))}
