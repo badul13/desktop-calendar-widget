@@ -383,8 +383,7 @@ input {
 }
 
 /* 칸이 좁아지면 근무시간이 날짜 숫자 옆에 안 들어간다.
-   잘라 보여주느니 아랫줄로 내려 칸 너비를 통째로 쓴다.
-   (MonthGrid 의 HEAD_H_COMPACT 가 이 줄 높이를 감안한다) */
+   잘라 보여주느니 아랫줄로 내려 칸 너비를 통째로 쓴다. */
 .cell .work-row {
   height: 13px;
   display: flex;
@@ -415,13 +414,18 @@ input {
   flex-direction: column;
   gap: 1px;
   min-width: 0;
+  /* 보이는 줄 수는 DayCell 이 max-height 로 정한다. 넘치면 묶음마다 따로 스크롤 —
+     칸이 좁아 스크롤바가 자리를 먹으면 글자가 잘리므로 막대는 숨긴다 */
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: none;
 }
 
 .td-grp {
   margin-top: auto;
 }
 
-/* 항목 한 줄 — 높이를 MonthGrid.tsx 의 ITEM_H 와 맞춰야 한다.
+/* 항목 한 줄.
    line-height:1 이면 Jua 의 글자 잉크가 줄 높이에 딱 차서 윗부분이 잘린다. */
 .it {
   height: 16px;
@@ -525,16 +529,6 @@ input {
   font-weight: 400;
   text-decoration: line-through;
   opacity: 0.8;
-}
-
-.more {
-  height: 16px;
-  display: flex;
-  align-items: center;
-  font-size: 9.5px;
-  color: var(--text-dim);
-  padding-left: 3px;
-  flex-shrink: 0;
 }
 
 /* ============ 선택한 날짜 편집줄 ============ */

@@ -24,12 +24,6 @@ type Props = {
   onMoveItem: (d: DragItem, toDate: string) => void
 }
 
-/** 항목 한 줄이 차지하는 높이 = .it 높이 16 + 줄 간격 1 */
-const ITEM_H = 17
-/** 항목이 쓸 수 없는 높이 = .cell 세로 패딩 5 + .cell-head 18 + .cell-items 위 여백 1 */
-const HEAD_H = 24
-/** 좁아지면 근무시간 배지를 아랫줄로 내리므로 머리 높이가 그만큼 늘어난다 */
-const HEAD_H_COMPACT = HEAD_H + 13
 /** 날짜 숫자 옆에 'HH:MM~HH:MM' 배지가 같이 들어갈 수 있는 최소 칸 너비 */
 const COMPACT_BELOW = 84
 
@@ -65,32 +59,19 @@ export default function MonthGrid({
     return m
   }, [events, todos])
 
-  /**
-   * 창 크기를 끌어서 바꿀 수 있으므로 칸에 몇 개가 들어가는지는 고정할 수 없다.
-   * 실제 렌더된 한 줄의 높이를 재서 항목 수를 계산한다.
-   */
+  /** 창 크기를 끌어서 바꿀 수 있으므로 칸 너비를 재서 근무시간 배지 자리를 정한다 */
   const gridRef = useRef<HTMLDivElement>(null)
-  const [{ maxItems, compact }, setMetrics] = useState({ maxItems: 3, compact: false })
+  const [compact, setCompact] = useState(false)
 
   useEffect(() => {
     const el = gridRef.current
     if (!el) return
-    const measure = (): void => {
-      const rowH = el.clientHeight / weeks.length
-      const cellW = el.clientWidth / 7
-      const isCompact = cellW < COMPACT_BELOW
-      const head = isCompact ? HEAD_H_COMPACT : HEAD_H
-      // 줄 사이 간격은 n개일 때 n-1번만 들어가므로 +1 을 보정한다
-      setMetrics({
-        maxItems: Math.max(1, Math.floor((rowH - head + 1) / ITEM_H)),
-        compact: isCompact
-      })
-    }
+    const measure = (): void => setCompact(el.clientWidth / 7 < COMPACT_BELOW)
     measure()
     const ro = new ResizeObserver(measure)
     ro.observe(el)
     return () => ro.disconnect()
-  }, [weeks.length])
+  }, [])
 
   /**
    * 드래그 중인 항목을 ref 와 state 두 군데에 둔다.
@@ -168,7 +149,6 @@ export default function MonthGrid({
                     workHours={workHours[key]}
                     events={b?.events ?? []}
                     todos={b?.todos ?? []}
-                    maxItems={maxItems}
                     compact={compact}
                     editingId={editingId}
                     dateKey={key}

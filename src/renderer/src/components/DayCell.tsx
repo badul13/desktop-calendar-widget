@@ -14,8 +14,6 @@ type Props = {
   workHours: WorkHours | undefined
   events: CalEvent[]
   todos: Todo[]
-  /** 칸 높이에 맞춰 계산된 최대 표시 개수. 넘치면 '+N' 으로 접는다. */
-  maxItems: number
   /** 칸이 좁아 날짜 숫자 옆에 근무시간이 안 들어가면 아랫줄로 내린다 */
   compact: boolean
   /** 편집 중인 항목 id — 달력에서도 어느 걸 고치는 중인지 보여준다 */
@@ -51,6 +49,18 @@ function shortTime(t: string): string {
 const CLICK_DELAY = 200
 
 /**
+ * 처음 보이는 줄 수. 일정 3줄 + 할 일 2줄이 기본이고,
+ * 한쪽이 덜 차면 남는 줄을 다른 쪽이 쓴다. 넘치는 건 묶음마다 따로 스크롤한다.
+ */
+const VISIBLE_ROWS = 5
+const TODO_ROWS = 2
+/** 항목 한 줄 = .it 높이 16 + .grp 줄 간격 1 (CSS 와 맞춰야 한다) */
+const ITEM_H = 16
+const ITEM_GAP = 1
+
+const groupHeight = (rows: number): number => rows * ITEM_H + Math.max(0, rows - 1) * ITEM_GAP
+
+/**
  * 달력 한 칸.
  *
  * 세 종류가 한 칸에 같이 들어가므로 위치·모양·색을 전부 갈라놓는다:
@@ -76,7 +86,6 @@ export default function DayCell({
   workHours,
   events,
   todos,
-  maxItems,
   compact,
   editingId,
   draggingId,
@@ -126,13 +135,11 @@ export default function DayCell({
     return a.createdAt.localeCompare(b.createdAt)
   })
 
-  const total = sortedEvents.length + sortedTodos.length
-  const room = Math.max(1, maxItems)
-  // 다 못 넣으면 마지막 한 줄은 '+N' 표시에 내준다
-  const shown = total > room ? room - 1 : total
-  const shownEvents = sortedEvents.slice(0, shown)
-  const shownTodos = sortedTodos.slice(0, Math.max(0, shown - shownEvents.length))
-  const hidden = total - shownEvents.length - shownTodos.length
+  const eventRows = Math.min(
+    sortedEvents.length,
+    VISIBLE_ROWS - Math.min(sortedTodos.length, TODO_ROWS)
+  )
+  const todoRows = Math.min(sortedTodos.length, VISIBLE_ROWS - eventRows)
 
   const startDrag = (e: React.DragEvent, kind: 'event' | 'todo', id: string): void => {
     cancelDeferred()
@@ -180,8 +187,8 @@ export default function DayCell({
       )}
 
       <div className="cell-items">
-        <div className="grp ev-grp">
-          {shownEvents.map((e) => (
+        <div className="grp ev-grp" style={{ maxHeight: groupHeight(eventRows) }}>
+          {sortedEvents.map((e) => (
             <div
               className="it ev"
               key={e.id}
@@ -213,8 +220,8 @@ export default function DayCell({
         </div>
 
         {/* margin-top:auto 로 아래에서부터 차오른다 */}
-        <div className="grp td-grp">
-          {shownTodos.map((t) => (
+        <div className="grp td-grp" style={{ maxHeight: groupHeight(todoRows) }}>
+          {sortedTodos.map((t) => (
             <div
               className="it td"
               key={t.id}
@@ -257,7 +264,6 @@ export default function DayCell({
               <span className="tx">{t.title}</span>
             </div>
           ))}
-          {hidden > 0 && <div className="more">+{hidden}</div>}
         </div>
       </div>
     </div>
