@@ -100,7 +100,7 @@ export const DEFAULT_DATA: AppData = {
     ddayDate: null,
     headerMode: 'clock',
     openAtLogin: false,
-    defaultWorkHours: { start: '10:00', end: '19:00' },
+    defaultWorkHours: { start: '10:00', end: '22:00' },
     notesOpen: false,
     notesWidth: NOTES_WIDTH
   },

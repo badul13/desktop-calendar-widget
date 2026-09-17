@@ -138,7 +138,7 @@ export default function DayEditor({
           <input
             className="hm"
             value={end}
-            placeholder="19:00"
+            placeholder="22:00"
             onChange={(e) => setEnd(e.target.value)}
             onBlur={() => commitWorkHours(start, end)}
             onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
