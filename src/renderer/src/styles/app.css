@@ -1105,6 +1105,10 @@ body.in-browser.bg-busy {
 
 /* 쪽지 한 장. 기본은 노란 메모지, data-color 로 5가지 중에 고른다. */
 .note {
+  /* 목록이 flex column 이라 그냥 두면 쪽지가 눌려 찌그러진다. textarea 는 rows=1 이
+     최소 크기여서 긴 메모가 한 줄 높이까지 찌부되고, 넘친 부분은 잘려 나가 아래쪽을
+     아예 고칠 수 없게 된다. */
+  flex-shrink: 0;
   background: var(--n-bg);
   border: 1px solid var(--n-line);
   border-radius: 10px;
@@ -1144,7 +1148,13 @@ body.in-browser.bg-busy {
   width: 100%;
   display: block;
   resize: none;
-  overflow: hidden;
+  /* 내용만큼 늘리되(autoGrow) 어느 선을 넘으면 쪽지 안에서 스크롤한다.
+     끝없이 늘어나면 긴 메모 한 장이 메모장을 통째로 차지한다. */
+  max-height: min(320px, 50vh);
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: var(--n-line) transparent;
   font: inherit;
   font-size: 12px;
   line-height: 1.55;
@@ -1157,6 +1167,15 @@ body.in-browser.bg-busy {
   cursor: text;
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+.note textarea::-webkit-scrollbar {
+  width: 4px;
+}
+
+.note textarea::-webkit-scrollbar-thumb {
+  background: var(--n-line);
+  border-radius: 4px;
 }
 
 .note textarea::placeholder {
