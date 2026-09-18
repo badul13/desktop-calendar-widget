@@ -1103,7 +1103,7 @@ body.in-browser.bg-busy {
   border-radius: 4px;
 }
 
-/* 쪽지 한 장. 기본은 노란 메모지, data-color 로 5가지 중에 고른다. */
+/* 쪽지 한 장. 기본은 노란 메모지, data-color 로 여러 색 중에 고른다. */
 .note {
   position: relative;
   /* 목록이 flex column 이라 그냥 두면 쪽지가 눌려 찌그러진다. textarea 는 rows=1 이
@@ -1138,6 +1138,30 @@ body.in-browser.bg-busy {
 .note[data-color='lilac'] {
   --n-bg: var(--n-lilac);
   --n-line: var(--n-lilac-line);
+}
+.note[data-color='peach'] {
+  --n-bg: var(--n-peach);
+  --n-line: var(--n-peach-line);
+}
+.note[data-color='coral'] {
+  --n-bg: var(--n-coral);
+  --n-line: var(--n-coral-line);
+}
+.note[data-color='sage'] {
+  --n-bg: var(--n-sage);
+  --n-line: var(--n-sage-line);
+}
+.note[data-color='teal'] {
+  --n-bg: var(--n-teal);
+  --n-line: var(--n-teal-line);
+}
+.note[data-color='slate'] {
+  --n-bg: var(--n-slate);
+  --n-line: var(--n-slate-line);
+}
+.note[data-color='mocha'] {
+  --n-bg: var(--n-mocha);
+  --n-line: var(--n-mocha-line);
 }
 
 .note:focus-within {
@@ -1212,7 +1236,8 @@ body.in-browser.bg-busy {
   display: flex;
   align-items: center;
   gap: 4px;
-  height: 16px;
+  /* 색이 늘어 스와치가 두 줄이 되면 푸터도 같이 높아진다 */
+  min-height: 16px;
   margin-top: 2px;
 }
 
@@ -1255,6 +1280,10 @@ body.in-browser.bg-busy {
 
 .note-foot .swatches {
   display: flex;
+  /* 색이 많아 한 줄에 다 못 들어가면 접는다. 폭이 좁을수록 줄이 늘어난다.
+     숨어 있을 때도 자리는 차지하므로, 올려놓는다고 쪽지 높이가 튀지는 않는다. */
+  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 4px;
   margin-left: auto;
   margin-right: 4px;
@@ -1299,6 +1328,24 @@ body.in-browser.bg-busy {
 }
 .note-foot .sw[data-color='lilac'] {
   background: var(--n-lilac-solid);
+}
+.note-foot .sw[data-color='peach'] {
+  background: var(--n-peach-solid);
+}
+.note-foot .sw[data-color='coral'] {
+  background: var(--n-coral-solid);
+}
+.note-foot .sw[data-color='sage'] {
+  background: var(--n-sage-solid);
+}
+.note-foot .sw[data-color='teal'] {
+  background: var(--n-teal-solid);
+}
+.note-foot .sw[data-color='slate'] {
+  background: var(--n-slate-solid);
+}
+.note-foot .sw[data-color='mocha'] {
+  background: var(--n-mocha-solid);
 }
 
 .note-foot .del {

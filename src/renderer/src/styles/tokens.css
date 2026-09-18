@@ -59,6 +59,24 @@
   --n-lilac: rgba(219, 205, 255, 0.5);
   --n-lilac-line: rgba(150, 128, 214, 0.42);
   --n-lilac-solid: #cfc0ff;
+  --n-peach: rgba(255, 214, 178, 0.5);
+  --n-peach-line: rgba(214, 143, 82, 0.42);
+  --n-peach-solid: #ffd0a3;
+  --n-coral: rgba(255, 198, 186, 0.5);
+  --n-coral-line: rgba(219, 118, 100, 0.42);
+  --n-coral-solid: #ffbdaf;
+  --n-sage: rgba(206, 228, 178, 0.5);
+  --n-sage-line: rgba(126, 168, 90, 0.42);
+  --n-sage-solid: #c8e0a0;
+  --n-teal: rgba(176, 226, 234, 0.5);
+  --n-teal-line: rgba(72, 158, 176, 0.42);
+  --n-teal-solid: #a4dde8;
+  --n-slate: rgba(210, 218, 228, 0.5);
+  --n-slate-line: rgba(130, 145, 165, 0.42);
+  --n-slate-solid: #ccd6e0;
+  --n-mocha: rgba(226, 208, 190, 0.5);
+  --n-mocha-line: rgba(160, 128, 100, 0.42);
+  --n-mocha-solid: #ddc7ae;
 
   /* 말풍선은 배경 위에 확실히 얹혀야 해서 반투명이라도 진하게 */
   --tip-bg: rgba(52, 48, 66, 0.94);
@@ -143,6 +161,24 @@
   --n-lilac: rgba(102, 93, 136, 0.55);
   --n-lilac-line: rgba(200, 182, 255, 0.4);
   --n-lilac-solid: #b8a8e8;
+  --n-peach: rgba(122, 99, 76, 0.55);
+  --n-peach-line: rgba(255, 200, 150, 0.4);
+  --n-peach-solid: #e8b98c;
+  --n-coral: rgba(129, 91, 82, 0.55);
+  --n-coral-line: rgba(255, 170, 150, 0.4);
+  --n-coral-solid: #e8a291;
+  --n-sage: rgba(100, 113, 82, 0.55);
+  --n-sage-line: rgba(190, 220, 150, 0.4);
+  --n-sage-solid: #b4cf8c;
+  --n-teal: rgba(82, 110, 117, 0.55);
+  --n-teal-line: rgba(150, 214, 228, 0.4);
+  --n-teal-solid: #8ccbdc;
+  --n-slate: rgba(97, 103, 110, 0.55);
+  --n-slate-line: rgba(185, 198, 214, 0.4);
+  --n-slate-solid: #b0bcc9;
+  --n-mocha: rgba(107, 95, 82, 0.55);
+  --n-mocha-line: rgba(206, 180, 152, 0.4);
+  --n-mocha-solid: #c7ae93;
 
   --tip-bg: rgba(70, 66, 86, 0.96);
   --tip-line: rgba(255, 255, 255, 0.18);

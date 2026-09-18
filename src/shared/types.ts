@@ -35,7 +35,19 @@ export type WorkHours = {
 }
 
 /** 쪽지 배경색 템플릿. 값이 없으면 기본 노란 메모지. */
-export const NOTE_COLORS = ['yellow', 'pink', 'mint', 'blue', 'lilac'] as const
+export const NOTE_COLORS = [
+  'yellow',
+  'pink',
+  'mint',
+  'blue',
+  'lilac',
+  'peach',
+  'coral',
+  'sage',
+  'teal',
+  'slate',
+  'mocha'
+] as const
 export type NoteColor = (typeof NOTE_COLORS)[number]
 
 /** 오른쪽 메모장의 쪽지 한 장. 날짜와 무관한 자유 메모. */

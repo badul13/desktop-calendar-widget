@@ -26,7 +26,13 @@ const COLOR_LABEL: Record<NoteColor, string> = {
   pink: '분홍',
   mint: '민트',
   blue: '파랑',
-  lilac: '연보라'
+  lilac: '연보라',
+  peach: '살구',
+  coral: '코랄',
+  sage: '세이지',
+  teal: '틸',
+  slate: '슬레이트',
+  mocha: '모카'
 }
 
 /** '2026.09.07' 형태. 메모는 언제 적었는지만 알면 되므로 시각은 뺀다. */
