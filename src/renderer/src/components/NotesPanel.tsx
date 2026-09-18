@@ -6,7 +6,7 @@ import {
   type Note,
   type NoteColor
 } from '@shared/types'
-import { Close, Plus, ChevronRight } from '../lib/icons'
+import { Close, Grip, Plus, ChevronRight } from '../lib/icons'
 import { isBlank, renderMarkdown, toggleTask } from '../lib/markdown'
 
 type Props = {
@@ -15,6 +15,7 @@ type Props = {
   onCreate: (text: string) => void
   onUpdate: (id: string, text: string) => void
   onRecolor: (id: string, color: NoteColor) => void
+  onReorder: (id: string, toIndex: number) => void
   onDelete: (id: string) => void
   onResize: (width: number) => void
   onCollapse: () => void
@@ -51,21 +52,45 @@ function autoGrow(el: HTMLTextAreaElement | null): void {
 function NoteCard({
   note,
   autoFocus,
+  dragging,
+  dropEdge,
+  canDrop,
   onUpdate,
   onRecolor,
-  onDelete
+  onDelete,
+  onDragStart,
+  onDragEnd,
+  onDragOver,
+  onDrop
 }: {
   note: Note
   /** 방금 '+ 메모' 로 만든 쪽지 — 바로 타이핑할 수 있게 커서를 준다 */
   autoFocus: boolean
+  /** 지금 끌리고 있는 쪽지인가 — 원래 자리를 흐리게 남긴다 */
+  dragging: boolean
+  /** 이 쪽지의 위/아래 중 어디에 꽂히는지. 그 자리에 선을 긋는다 */
+  dropEdge: 'before' | 'after' | null
+  /** 쪽지를 끄는 중인가. state 가 아니라 ref 를 읽어야 첫 dragover/drop 을 놓치지 않는다 */
+  canDrop: () => boolean
   onUpdate: (id: string, text: string) => void
   onRecolor: (id: string, color: NoteColor) => void
   onDelete: (id: string) => void
+  onDragStart: () => void
+  onDragEnd: () => void
+  onDragOver: (before: boolean) => void
+  onDrop: (before: boolean) => void
 }): React.JSX.Element {
   const [editing, setEditing] = useState(autoFocus)
   const [text, setText] = useState(note.text)
   const ref = useRef<HTMLTextAreaElement>(null)
+  const card = useRef<HTMLDivElement>(null)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  /** 커서가 쪽지의 위쪽 절반에 있으면 그 위에, 아래쪽이면 그 아래에 꽂는다 */
+  const half = (e: React.DragEvent): boolean => {
+    const r = e.currentTarget.getBoundingClientRect()
+    return e.clientY < r.top + r.height / 2
+  }
 
   // 다른 곳에서 바뀐 내용을 받아온다. 편집 중일 땐 덮어쓰지 않는다.
   useEffect(() => {
@@ -118,7 +143,26 @@ function NoteCard({
   }
 
   return (
-    <div className="note" data-color={note.color ?? 'yellow'} data-editing={editing}>
+    <div
+      ref={card}
+      className="note"
+      data-color={note.color ?? 'yellow'}
+      data-editing={editing}
+      data-dragging={dragging}
+      data-drop={dropEdge ?? undefined}
+      onDragOver={(e) => {
+        // preventDefault 를 해야 이 자리가 '놓을 수 있는 곳' 이 된다
+        if (!canDrop()) return
+        e.preventDefault()
+        e.dataTransfer.dropEffect = 'move'
+        onDragOver(half(e))
+      }}
+      onDrop={(e) => {
+        if (!canDrop()) return
+        e.preventDefault()
+        onDrop(half(e))
+      }}
+    >
       {editing ? (
         <textarea
           ref={ref}
@@ -165,6 +209,25 @@ function NoteCard({
       )}
 
       <div className="note-foot">
+        {/* button 이 아니라 span 이다. 폼 컨트롤은 브라우저마다 draggable 을
+            무시하는 경우가 있어 손잡이로는 쓰지 않는다. */}
+        <span
+          className="grip"
+          role="button"
+          draggable
+          onDragStart={(e) => {
+            e.dataTransfer.effectAllowed = 'move'
+            e.dataTransfer.setData('text/plain', note.id)
+            // 손잡이만 끌리면 무엇을 옮기는지 안 보인다. 쪽지 전체를 끌리는 그림으로 쓴다
+            if (card.current) e.dataTransfer.setDragImage(card.current, 24, 16)
+            onDragStart()
+          }}
+          onDragEnd={onDragEnd}
+          data-tip="끌어서 순서 바꾸기"
+          aria-label="끌어서 순서 바꾸기"
+        >
+          <Grip size={11} />
+        </span>
         <span className="when">{stamp(note.updatedAt)}</span>
         <span className="swatches">
           {NOTE_COLORS.map((c) => (
@@ -203,6 +266,7 @@ export default function NotesPanel({
   onCreate,
   onUpdate,
   onRecolor,
+  onReorder,
   onDelete,
   onResize,
   onCollapse
@@ -226,6 +290,42 @@ export default function NotesPanel({
   const create = (): void => {
     setSeenIds(new Set(notes.map((n) => n.id)))
     onCreate('')
+  }
+
+  /* ---- 끌어서 순서 바꾸기 ---- */
+
+  /**
+   * 달력 항목 이동과 같은 이유로 ref 와 state 를 같이 둔다.
+   * dragover 중에는 브라우저가 dataTransfer 를 못 읽게 막으므로 무엇이 끌려오는지
+   * 따로 기억해야 하는데, state 만 쓰면 dragstart 직후의 첫 dragover/drop 이
+   * 아직 반영 안 된 옛 값을 본다. 판정은 ref 로, 흐리게/선 긋기는 state 로 한다.
+   */
+  const dragRef = useRef<string | null>(null)
+  const [dragId, setDragId] = useState<string | null>(null)
+  const [over, setOver] = useState<{ id: string; before: boolean } | null>(null)
+
+  const endDrag = (): void => {
+    dragRef.current = null
+    setDragId(null)
+    setOver(null)
+  }
+
+  /**
+   * 목록에 보이는 순서가 곧 `notes` 배열 순서다.
+   * 끌던 쪽지를 먼저 빼낸 뒤의 자리로 환산해서 넘긴다 — 자기보다 아래로 옮길 때는
+   * 자기가 빠진 만큼 목표 자리가 한 칸 당겨진다.
+   */
+  const drop = (targetId: string, before: boolean): void => {
+    const id = dragRef.current
+    endDrag()
+    if (!id || id === targetId) return
+    const from = notes.findIndex((n) => n.id === id)
+    const t = notes.findIndex((n) => n.id === targetId)
+    if (from < 0 || t < 0) return
+    let to = before ? t : t + 1
+    if (from < to) to -= 1
+    if (to === from) return
+    onReorder(id, to)
   }
 
   /* ---- 왼쪽 경계를 끌어 폭 조절 ---- */
@@ -317,14 +417,26 @@ export default function NotesPanel({
             <br />위 &lsquo;메모&rsquo; 를 눌러 추가하세요
           </p>
         ) : (
-          notes.map((n, i) => (
+          notes.map((n) => (
             <NoteCard
               key={n.id}
               note={n}
               autoFocus={seenIds !== null && !seenIds.has(n.id) && n.text === ''}
+              dragging={dragId === n.id}
+              dropEdge={
+                over && over.id === n.id && dragId !== n.id ? (over.before ? 'before' : 'after') : null
+              }
+              canDrop={() => dragRef.current !== null}
               onUpdate={onUpdate}
               onRecolor={onRecolor}
               onDelete={onDelete}
+              onDragStart={() => {
+                dragRef.current = n.id
+                setDragId(n.id)
+              }}
+              onDragEnd={endDrag}
+              onDragOver={(before) => setOver({ id: n.id, before })}
+              onDrop={(before) => drop(n.id, before)}
             />
           ))
         )}

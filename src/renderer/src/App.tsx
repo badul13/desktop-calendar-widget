@@ -188,6 +188,7 @@ export default function App(): React.JSX.Element {
             onCreate={(text) => void bridge.createNote(text).then(setData)}
             onUpdate={(id, text) => void bridge.updateNote(id, text).then(setData)}
             onRecolor={(id, color) => void bridge.recolorNote(id, color).then(setData)}
+            onReorder={(id, toIndex) => void bridge.reorderNote(id, toIndex).then(setData)}
             onDelete={(id) => void bridge.deleteNote(id).then(setData)}
             onCollapse={toggleNotes}
           />

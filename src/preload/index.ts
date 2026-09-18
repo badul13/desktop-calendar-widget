@@ -18,6 +18,7 @@ const api = {
   createNote: (text: string) => ipcRenderer.invoke('note:create', text),
   updateNote: (id: string, text: string) => ipcRenderer.invoke('note:update', id, text),
   recolorNote: (id: string, color: string) => ipcRenderer.invoke('note:recolor', id, color),
+  reorderNote: (id: string, toIndex: number) => ipcRenderer.invoke('note:reorder', id, toIndex),
   deleteNote: (id: string) => ipcRenderer.invoke('note:delete', id),
   setNotesWindow: (open: boolean, panelWidth?: number) =>
     ipcRenderer.invoke('window:notes', open, panelWidth),

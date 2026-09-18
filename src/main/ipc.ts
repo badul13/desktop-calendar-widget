@@ -123,6 +123,23 @@ export function registerIpc(win: BrowserWindow): void {
     return data
   })
 
+  /**
+   * 쪽지 순서 바꾸기. 목록에 보이는 순서가 곧 `notes` 배열 순서라
+   * 배열에서 빼내 원하는 자리에 다시 꽂으면 된다.
+   * `toIndex` 는 빼낸 뒤의 배열 기준이다 (렌더러가 그렇게 환산해서 준다).
+   */
+  ipcMain.handle('note:reorder', (_e, id: string, toIndex: number) => {
+    const data = patch((d) => {
+      const from = d.notes.findIndex((x) => x.id === id)
+      if (from < 0) return
+      const [moved] = d.notes.splice(from, 1)
+      const to = Math.max(0, Math.min(d.notes.length, toIndex))
+      d.notes.splice(to, 0, moved)
+    })
+    broadcast(win, data)
+    return data
+  })
+
   ipcMain.handle('note:delete', (_e, id: string) => {
     const data = patch((d) => {
       d.notes = d.notes.filter((x) => x.id !== id)

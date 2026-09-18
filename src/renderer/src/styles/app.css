@@ -1105,6 +1105,7 @@ body.in-browser.bg-busy {
 
 /* 쪽지 한 장. 기본은 노란 메모지, data-color 로 5가지 중에 고른다. */
 .note {
+  position: relative;
   /* 목록이 flex column 이라 그냥 두면 쪽지가 눌려 찌그러진다. textarea 는 rows=1 이
      최소 크기여서 긴 메모가 한 줄 높이까지 찌부되고, 넘친 부분은 잘려 나가 아래쪽을
      아예 고칠 수 없게 된다. */
@@ -1142,6 +1143,31 @@ body.in-browser.bg-busy {
 .note:focus-within {
   border-color: var(--n-line);
   filter: saturate(1.25) brightness(1.02);
+}
+
+/* 끌리는 동안은 흐리게 — 원래 자리가 어디였는지 남겨둔다 */
+.note[data-dragging='true'] {
+  opacity: 0.4;
+}
+
+/* 꽂힐 자리를 선으로 긋는다. 쪽지 사이 간격(7px) 한가운데에 놓인다. */
+.note[data-drop='before']::before,
+.note[data-drop='after']::after {
+  content: '';
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--accent);
+}
+
+.note[data-drop='before']::before {
+  top: -5px;
+}
+
+.note[data-drop='after']::after {
+  bottom: -5px;
 }
 
 .note textarea {
@@ -1188,6 +1214,37 @@ body.in-browser.bg-busy {
   gap: 4px;
   height: 16px;
   margin-top: 2px;
+}
+
+/* 순서 바꾸기 손잡이. 스와치와 같이 평소엔 숨었다가 쪽지에 올리면 나타난다
+   (자리는 늘 차지하므로 날짜가 밀리지 않는다) */
+.note-foot .grip {
+  width: 13px;
+  height: 13px;
+  padding: 0;
+  flex-shrink: 0;
+  /* 끌 때 옆 글자가 딸려 선택되지 않게 */
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-dim);
+  cursor: grab;
+  opacity: 0;
+  transition: opacity 150ms var(--ease);
+}
+
+.note:hover .grip,
+.note:focus-within .grip {
+  opacity: 0.75;
+}
+
+.note-foot .grip:hover {
+  opacity: 1;
+}
+
+.note-foot .grip:active {
+  cursor: grabbing;
 }
 
 .note-foot .when {

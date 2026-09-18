@@ -50,6 +50,18 @@ export const Gear = ({ size = 15 }: P): React.JSX.Element => (
   </svg>
 )
 
+/** 끌어서 순서를 바꾸는 손잡이. 선보다 점 여섯 개가 '잡는 곳'으로 읽힌다. */
+export const Grip = ({ size = 12 }: P): React.JSX.Element => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+    <circle cx="9" cy="5" r="1.9" />
+    <circle cx="15" cy="5" r="1.9" />
+    <circle cx="9" cy="12" r="1.9" />
+    <circle cx="15" cy="12" r="1.9" />
+    <circle cx="9" cy="19" r="1.9" />
+    <circle cx="15" cy="19" r="1.9" />
+  </svg>
+)
+
 export const NoteIcon = ({ size = 15 }: P): React.JSX.Element => (
   <svg {...base(size)} strokeWidth={1.9}>
     <path d="M15.5 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5z" />

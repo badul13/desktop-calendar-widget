@@ -36,6 +36,7 @@ export type Bridge = {
   createNote(text: string): Promise<AppData>
   updateNote(id: string, text: string): Promise<AppData>
   recolorNote(id: string, color: NoteColor): Promise<AppData>
+  reorderNote(id: string, toIndex: number): Promise<AppData>
   deleteNote(id: string): Promise<AppData>
   /** Electron 에서만 — 메모장을 펼칠 때 창 자체를 넓힌다 */
   setNotesWindow?(open: boolean, panelWidth?: number): Promise<void>
@@ -188,6 +189,13 @@ const mockBridge: Bridge = {
     mockPatch((d) => {
       const n = d.notes.find((x) => x.id === id)
       if (n) n.color = color
+    }),
+  reorderNote: (id, toIndex) =>
+    mockPatch((d) => {
+      const from = d.notes.findIndex((x) => x.id === id)
+      if (from < 0) return
+      const [moved] = d.notes.splice(from, 1)
+      d.notes.splice(Math.max(0, Math.min(d.notes.length, toIndex)), 0, moved)
     }),
   deleteNote: (id) =>
     mockPatch((d) => {
