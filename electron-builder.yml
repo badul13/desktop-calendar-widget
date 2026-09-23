@@ -39,6 +39,8 @@ nsis:
   createDesktopShortcut: true
   createStartMenuShortcut: true
   shortcutName: 캘린더 위젯
+  # 깃허브 릴리즈는 파일 이름의 한글을 지워 버리므로 exe 이름만 영문으로 둔다
+  artifactName: CalendarWidget-Setup-${version}.exe
 
 portable:
-  artifactName: 캘린더위젯-portable-${version}.exe
+  artifactName: CalendarWidget-portable-${version}.exe

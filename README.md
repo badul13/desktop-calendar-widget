@@ -18,8 +18,8 @@ Windows 바탕화면에 반투명하게 띄우는 업무용 월간 플래너.
 
 | 파일 | 설명 |
 |---|---|
-| `캘린더 위젯 Setup x.y.z.exe` | 설치본. 시작 메뉴·바로가기·제거 프로그램이 생긴다 |
-| `캘린더위젯-portable-x.y.z.exe` | 무설치본. 실행하면 바로 뜬다 |
+| `CalendarWidget-Setup-x.y.z.exe` | 설치본. 시작 메뉴·바로가기·제거 프로그램이 생긴다 |
+| `CalendarWidget-portable-x.y.z.exe` | 무설치본. 실행하면 바로 뜬다 |
 
 > **코드 서명이 없어서** 처음 실행하면 "Windows의 PC 보호" 경고가 뜬다.
 
