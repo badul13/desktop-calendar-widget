@@ -1,6 +1,6 @@
 {
   "name": "calendar-widget",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Windows 바탕화면에 반투명하게 띄우는 업무용 월간 플래너",
   "main": "./out/main/index.js",
   "author": "taehyeon.jeong",
